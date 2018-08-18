@@ -3,12 +3,13 @@ import pandas as pd
 import datetime
 import math
 import os 
+import argparse
 
- 
+
 class PDF(FPDF):
     def __init__(self, filepath=None, title_font_family = "Times", cell_font_family = "Times", 
-                title_font_size = 25, cell_font_size = 25, title_height = 1, cell_height = 0.75,
-                align = "C", dest = ""):
+                title_font_size = 20, cell_font_size = 25, title_height = 1, cell_height = 0.75,
+                align = "C", output_path = "", non_member_pages = 3):
 
         super().__init__(orientation="P", unit="in", format="Letter")
 
@@ -31,7 +32,10 @@ class PDF(FPDF):
         self.align = align
 
         # Set output directory
-        self.dest = dest 
+        self.output_path = output_path 
+
+        # Set number of non-member pages
+        self.non_member_pages = non_member_pages
 
 
     # Create data frame from supplied data file
@@ -76,7 +80,8 @@ class PDF(FPDF):
 
         # Calculate pages required for the sign-in sheet. 
         # Height
-        page_height = 11 - ( 0.393701 * 2 ) - self.title_height
+        margin = 0.393701
+        page_height = 11 - ( margin * 2 ) - self.title_height
         cells_per_page = math.floor( ( ( page_height / len(df) ) * len(df) ) / self.cell_height ) 
         
         # Account for the header
@@ -84,7 +89,7 @@ class PDF(FPDF):
         cells_per_page = cells_per_page - 2
 
         # Width
-        page_width = 8.5 - ( 0.393701 * 2 ) 
+        page_width = 8.5 - ( margin * 2 ) 
 
         # ACM members
         names_mem = ( page_width * 0.5 ) / 2
@@ -136,7 +141,7 @@ class PDF(FPDF):
                     border = 1, ln = 1, align = self.align)
 
         # Create Non-ACM member sign in
-        for i in range(3):
+        for i in range(self.non_member_pages):
 
             self.add_page()
 
@@ -177,12 +182,29 @@ class PDF(FPDF):
                 self.cell(w = email_address, h = 0.75, txt = "",
                         border = 1, ln = 1, align = self.align)
 
+        self.output(name = "acm_sign_in.pdf", dest = self.output_path)
 
-        self.output(name = "acm_sign_in.pdf", dest = self.dest)
 
-    
+# Parse the command line arguments.
+def parser():
+
+    parser = argparse.ArgumentParser(description="Create sign-in sheets for ACM-related events.")
+    parser.add_argument("-i", "--input", help="filepath to the ACM chapter member list file", required=True)
+    parser.add_argument("-e", "--event", help="name of the ACM event", default="< Event Name >")
+    parser.add_argument("-d", "--date", help="date of the ACM event", default="< Event Date >")
+    parser.add_argument("-tf", "--title-font", help="title font size", default=20, type=int)
+    parser.add_argument("-cf", "--cell-font", help="cell font size", default=25, type=int)
+    parser.add_argument("-nm", "--non-member", help="additional non member pages", default=3, type=int)
+    parser.add_argument("-o", "--output", help="output path of the sign-in sheet", default="")
+
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
 
-    filepath = "/Users/rditljqc/Downloads/chapter_member_listing.csv"
-    pdf = PDF(filepath)
-    pdf.create_sign_in(" < Event Here >", " < Date Here >")
+    args = parser()
+
+    pdf = PDF(filepath = args.input, title_font_size = args.title_font, cell_font_size = args.cell_font, 
+                non_member_pages = args.non_member, output_path = args.output)
+    
+    pdf.create_sign_in(event = args.event, date = args.date)

@@ -14,7 +14,7 @@ class PDF(FPDF):
         super().__init__(orientation="P", unit="in", format="Letter")
 
         # Create data frame from supplied data file.  
-        self.df = self.create_df(filepath)
+        self.df = self.__create_df(filepath)
 
         # Set font size 
         self.title_font_family = title_font_family
@@ -39,7 +39,7 @@ class PDF(FPDF):
 
 
     # Create data frame from supplied data file
-    def create_df(self, filepath):
+    def __create_df(self, filepath):
 
         # Verify the supplied file is a valid csv file
         filename = os.path.basename(filepath)
@@ -151,7 +151,7 @@ class PDF(FPDF):
             self.ln()
 
             # [ Last ][ First ][ ACM Member? ][ Work E-Email ]
-            self.set_font(family = self.cell_font_family, style = "B", size = 12)
+            self.set_font(family = self.cell_font_family, style = "B", size = 11)
 
             self.cell(w = names_non_mem, h = 0.4, txt = "Last Name",
                     border = 1, ln = 0, align = self.align)
@@ -182,7 +182,7 @@ class PDF(FPDF):
                 self.cell(w = email_address, h = 0.75, txt = "",
                         border = 1, ln = 1, align = self.align)
 
-        self.output(name = "acm_sign_in.pdf", dest = self.output_path)
+        self.output(name = os.path.join(self.output_path, "acm_sign_in.pdf"), dest = 'F')
 
 
 # Parse the command line arguments.
@@ -190,8 +190,8 @@ def parser():
 
     parser = argparse.ArgumentParser(description="Create sign-in sheets for ACM-related events.")
     parser.add_argument("-i", "--input", help="filepath to the ACM chapter member list file", required=True)
-    parser.add_argument("-e", "--event", help="name of the ACM event", default="< Event Name >")
-    parser.add_argument("-d", "--date", help="date of the ACM event", default="< Event Date >")
+    parser.add_argument("-e", "--event", help="name of the ACM event", default="< Event Name >", type=str)
+    parser.add_argument("-d", "--date", help="date of the ACM event", default="< Event Date >", type=str)
     parser.add_argument("-tf", "--title-font", help="title font size", default=20, type=int)
     parser.add_argument("-cf", "--cell-font", help="cell font size", default=25, type=int)
     parser.add_argument("-nm", "--non-member", help="additional non member pages", default=3, type=int)
